@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>maymo — brown dwarf polar vortex modeling</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #ffffff;
+      --bg2:       #f6f6f4;
+      --bg3:       #efefec;
+      --text:      #1a1a18;
+      --text2:     #5a5a56;
+      --text3:     #9a9a94;
+      --border:    rgba(0,0,0,0.09);
+      --border2:   rgba(0,0,0,0.14);
+      --info-bg:   #eef4ff;
+      --info-text: #2255bb;
+      --mono:      'DM Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+      --radius:    10px;
+      --radius-lg: 16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 52px;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: var(--mono); font-size: 15px; font-weight: 500;
+      color: var(--text); text-decoration: none; letter-spacing: -0.01em;
+    }
+
+    .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+
+    .nav-links a {
+      font-size: 13px; color: var(--text2); text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.accent { color: var(--info-text); }
+
+    /* Layout */
+    .container { max-width: 860px; margin: 0 auto; padding: 0 40px; }
+    section { border-bottom: 0.5px solid var(--border); }
+
+    .section-label {
+      font-family: var(--mono); font-size: 10px; font-weight: 400;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text3); margin-bottom: 16px;
+    }
+
+    /* Hero */
+    #hero { padding: 72px 0 56px; text-align: center; }
+
+    .hero-badge {
+      display: inline-block; font-family: var(--mono); font-size: 10px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 4px 12px; border-radius: 20px;
+      background: var(--info-bg); color: var(--info-text); margin-bottom: 20px;
+    }
+
+    #hero h1 {
+      font-size: 36px; font-weight: 300; line-height: 1.2;
+      letter-spacing: -0.02em; margin-bottom: 14px;
+    }
+    #hero h1 strong { font-weight: 500; }
+
+    #hero p {
+      font-size: 15px; color: var(--text2); font-weight: 300;
+      max-width: 480px; margin: 0 auto 28px; line-height: 1.7;
+    }
+
+    .hero-ctas { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 40px; }
+
+    .btn {
+      font-family: var(--sans); font-size: 13px; padding: 8px 20px;
+      border-radius: var(--radius); cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .btn-dark  { background: var(--text); color: var(--bg); border: none; }
+    .btn-dark:hover { opacity: 0.82; }
+    .btn-outline { background: transparent; color: var(--text); border: 0.5px solid var(--border2); }
+    .btn-outline:hover { background: var(--bg2); }
+
+    .hero-viz {
+      margin: 0 auto; width: 100%; max-width: 540px; height: 200px;
+      border-radius: var(--radius-lg); background: var(--bg2);
+      border: 0.5px solid var(--border); overflow: hidden;
+    }
+    .hero-viz svg { width: 100%; height: 100%; }
+
+    /* Install */
+    #install { padding: 48px 0; }
+
+    .install-block {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg2); border: 0.5px solid var(--border);
+      border-radius: var(--radius); padding: 12px 18px; margin-bottom: 12px;
+    }
+    .install-cmd { font-family: var(--mono); font-size: 13px; color: var(--text); }
+    .install-cmd span { color: var(--text3); margin-right: 4px; }
+
+    .copy-btn {
+      font-family: var(--mono); font-size: 10px; color: var(--text3);
+      background: none; border: 0.5px solid var(--border2); border-radius: 5px;
+      padding: 3px 8px; cursor: pointer; transition: color 0.15s;
+    }
+    .copy-btn:hover  { color: var(--text); }
+    .copy-btn.copied { color: #2a9960; border-color: #2a9960; }
+
+    .code-block {
+      background: var(--bg2); border: 0.5px solid var(--border);
+      border-radius: var(--radius); padding: 16px 18px;
+      font-family: var(--mono); font-size: 12.5px; line-height: 2; overflow-x: auto;
+    }
+    .ck { color: #2255bb; }
+    .cf { color: #1a7a50; }
+    .cc { color: var(--text3); font-style: italic; }
+    .cs { color: #b05000; }
+
+    /* Features */
+    #features { padding: 48px 0; background: var(--bg2); }
+
+    .feature-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 4px;
+    }
+    @media (max-width: 640px) { .feature-grid { grid-template-columns: 1fr; } }
+
+    .feature-card {
+      background: var(--bg); border: 0.5px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .feature-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      margin-bottom: 12px; display: flex; align-items: center;
+      justify-content: center; font-size: 15px;
+    }
+    .feature-card h3 { font-size: 13px; font-weight: 500; margin-bottom: 5px; }
+    .feature-card p  { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+    /* GUI */
+    #gui { padding: 48px 0; }
+
+    .gui-strip {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center;
+    }
+    @media (max-width: 640px) { .gui-strip { grid-template-columns: 1fr; } }
+
+    .gui-preview {
+      height: 140px; border-radius: var(--radius-lg); background: var(--bg2);
+      border: 0.5px solid var(--border); display: flex; align-items: center;
+      justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--text3);
+    }
+    .gui-text p { font-size: 13.5px; color: var(--text2); margin-bottom: 16px; line-height: 1.7; font-weight: 300; }
+
+    /* Team */
+    #team { padding: 48px 0; background: var(--bg2); }
+
+    .team-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 4px;
+    }
+    @media (max-width: 640px) { .team-grid { grid-template-columns: repeat(2,1fr); } }
+
+    .team-card {
+      background: var(--bg); border: 0.5px solid var(--border);
+      border-radius: var(--radius); padding: 16px 12px; text-align: center;
+    }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500; margin: 0 auto 10px;
+    }
+    .team-card .name { font-size: 12px; font-weight: 500; }
+    .team-card .role { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    /* Cite */
+    #cite { padding: 48px 0; }
+
+    .cite-block {
+      border-left: 2px solid #c8d8f0; border-radius: 0 var(--radius) var(--radius) 0;
+      background: var(--info-bg); padding: 16px 20px;
+      font-size: 13px; color: var(--text2); line-height: 1.8;
+    }
+    .cite-links { margin-top: 10px; display: flex; gap: 14px; flex-wrap: wrap; }
+    .cite-links a { font-family: var(--mono); font-size: 11px; color: var(--info-text); text-decoration: none; }
+    .cite-links a:hover { text-decoration: underline; }
+
+    .bibtex {
+      margin-top: 14px; background: var(--bg); border: 0.5px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      font-family: var(--mono); font-size: 11.5px; line-height: 1.9;
+      color: var(--text2); overflow-x: auto; display: none;
+    }
+    .bibtex.open { display: block; }
+
+    .toggle-bibtex {
+      font-family: var(--mono); font-size: 11px; color: var(--info-text);
+      background: none; border: none; cursor: pointer; padding: 0; margin-top: 8px; display: inline-block;
+    }
+    .toggle-bibtex:hover { text-decoration: underline; }
+
+    /* Footer */
+    footer {
+      padding: 28px 40px; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .footer-left { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+    .footer-right { display: flex; gap: 20px; }
+    .footer-right a { font-size: 12px; color: var(--text3); text-decoration: none; }
+    .footer-right a:hover { color: var(--text2); }
+
+    /* Scroll-reveal */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.45s ease, transform 0.45s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <a class="nav-logo" href="/">maymo</a>
+  <ul class="nav-links">
+    <li><a href="docs/index.html">Docs</a></li>
+    <li><a href="docs/notebooks.html">Notebooks</a></li>
+    <li><a href="docs/workflow.html">Workflow</a></li>
+    <li><a href="gui/index.html" class="accent">maymo-gui ↗</a></li>
+    <li><a href="#" id="nav-github">GitHub</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section id="hero">
+  <div class="container">
+    <span class="hero-badge">Brown dwarf atmospheres</span>
+    <h1>Brown dwarf <strong>polar vortex</strong> modeling</h1>
+    <p>Multi-epoch atmospheric simulations for substellar objects — from surface flux maps to time-series predictions.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-dark" href="docs/index.html">Get started →</a>
+      <a class="btn btn-outline" href="gui/index.html">Try maymo-gui</a>
+      <a class="btn btn-outline" href="#cite">Read the paper</a>
+    </div>
+    <!-- Swap this SVG for a real rendered output image when ready -->
+    <div class="hero-viz">
+      <svg viewBox="0 0 540 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#d4853a" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#d4853a" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="270" cy="100" rx="72" ry="72" fill="#e8c49a" opacity="0.22"/>
+        <ellipse cx="270" cy="100" rx="62" ry="62" fill="#dba870" opacity="0.28"/>
+        <ellipse cx="270" cy="100" rx="50" ry="50" fill="#c98c52" opacity="0.35"/>
+        <ellipse cx="270" cy="88"  rx="48" ry="8"  fill="#b87040" opacity="0.30"/>
+        <ellipse cx="270" cy="104" rx="48" ry="6"  fill="#9a5c30" opacity="0.22"/>
+        <ellipse cx="270" cy="118" rx="44" ry="7"  fill="#c08050" opacity="0.25"/>
+        <ellipse cx="270" cy="55"  rx="20" ry="10" fill="#ffffff" opacity="0.18"/>
+        <ellipse cx="270" cy="55"  rx="10" ry="5"  fill="none" stroke="#ffffff" stroke-width="1" opacity="0.35"/>
+        <ellipse cx="270" cy="55"  rx="16" ry="8"  fill="none" stroke="#e0c090" stroke-width="0.5" stroke-dasharray="3 4" opacity="0.4"/>
+        <ellipse cx="270" cy="100" rx="90"  ry="18" fill="none" stroke="#c0904a" stroke-width="0.5" opacity="0.20"/>
+        <ellipse cx="270" cy="100" rx="110" ry="22" fill="none" stroke="#b07838" stroke-width="0.5" opacity="0.14"/>
+        <ellipse cx="270" cy="100" rx="130" ry="26" fill="none" stroke="#a06830" stroke-width="0.5" opacity="0.10"/>
+        <ellipse cx="270" cy="100" rx="80"  ry="80" fill="url(#glow)"/>
+        <text x="370" y="58" font-family="'DM Mono',monospace" font-size="10" fill="#9a9a94">polar vortex</text>
+        <line x1="285" y1="56" x2="366" y2="58" stroke="#c0c0b8" stroke-width="0.5"/>
+        <text x="370" y="96" font-family="'DM Mono',monospace" font-size="10" fill="#9a9a94">atmospheric bands</text>
+        <line x1="320" y1="94" x2="366" y2="96" stroke="#c0c0b8" stroke-width="0.5"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- Install -->
+<section id="install">
+  <div class="container reveal">
+    <p class="section-label">Install</p>
+    <div class="install-block">
+      <span class="install-cmd"><span>$</span> pip install maymo</span>
+      <button class="copy-btn" onclick="copyCmd(this,'pip install maymo')">copy</button>
+    </div>
+    <div class="code-block">
+      <span class="ck">import</span> maymo <span class="ck">as</span> mm<br>
+      <span class="cc"># initialize a polar vortex model</span><br>
+      model = mm.<span class="cf">PolarVortex</span>(lat=<span class="cs">75</span>, T_eff=<span class="cs">1200</span>)<br>
+      model.<span class="cf">run</span>(n_epochs=<span class="cs">3</span>)<br>
+      model.<span class="cf">plot_lightcurve</span>()
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features">
+  <div class="container reveal">
+    <p class="section-label">What maymo does</p>
+    <div class="feature-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#fef0e4;">🌀</div>
+        <h3>Polar vortex geometry</h3>
+        <p>Spherical cap flux maps with configurable vortex latitude, radius, and contrast.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#eef4ff;">📡</div>
+        <h3>Time-series forward model</h3>
+        <p>Multi-epoch photometric and spectroscopic predictions from rotating surface maps.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#f0f8ee;">🪐</div>
+        <h3>Brown dwarfs &amp; companions</h3>
+        <p>Applicable to isolated brown dwarfs and directly-imaged planetary companions.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- GUI -->
+<section id="gui">
+  <div class="container reveal">
+    <p class="section-label">maymo-gui</p>
+    <div class="gui-strip">
+      <div class="gui-preview">
+        <!-- Replace with a screenshot once the GUI prototype is further along -->
+        <span>[ interactive preview ]</span>
+      </div>
+      <div class="gui-text">
+        <p>Run simplified vortex simulations in the browser — no Python required. Adjust vortex parameters and watch the lightcurve update in real time.</p>
+        <a class="btn btn-dark" href="gui/index.html">Launch maymo-gui →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Team -->
+<section id="team">
+  <div class="container reveal">
+    <p class="section-label">Team</p>
+    <div class="team-grid">
+      <!-- Fill in real names, initials, and roles -->
+      <div class="team-card">
+        <div class="avatar" style="background:#eef4ff;color:#2255bb;">FN</div>
+        <div class="name">F. Nori</div>
+        <div class="role">Lead · atmospheres</div>
+      </div>
+      <div class="team-card">
+        <div class="avatar" style="background:#f0f8ee;color:#2a7a40;">T2</div>
+        <div class="name">Team member</div>
+        <div class="role">JS · GUI</div>
+      </div>
+      <div class="team-card">
+        <div class="avatar" style="background:#fef0e4;color:#b05000;">T3</div>
+        <div class="name">Team member</div>
+        <div class="role">Modeling</div>
+      </div>
+      <div class="team-card">
+        <div class="avatar" style="background:#fdf0f4;color:#a02050;">T4</div>
+        <div class="name">Team member</div>
+        <div class="role">Observations</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Cite -->
+<section id="cite">
+  <div class="container reveal">
+    <p class="section-label">Cite</p>
+    <div class="cite-block">
+      Nori et al. (2025). <em>Polar vortex dynamics in brown dwarf atmospheres from multi-epoch time-series observations.</em> The Astrophysical Journal Letters.
+      <div class="cite-links">
+        <a href="#" target="_blank" rel="noopener">ADS</a>
+        <a href="#" target="_blank" rel="noopener">arXiv</a>
+        <a href="#" target="_blank" rel="noopener">DOI</a>
+      </div>
+      <button class="toggle-bibtex" onclick="toggleBibtex()">[ show BibTeX ]</button>
+      <div class="bibtex" id="bibtex">
+@article{nori2025maymo,<br>
+&nbsp;&nbsp;author  = {Nori, F. and others},<br>
+&nbsp;&nbsp;title   = {Polar vortex dynamics in brown dwarf atmospheres},<br>
+&nbsp;&nbsp;journal = {The Astrophysical Journal Letters},<br>
+&nbsp;&nbsp;year    = {2025},<br>
+&nbsp;&nbsp;doi     = {10.xxxx/xxxxxx}<br>
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="container">
+  <span class="footer-left">maymo · University of Arizona · MIT License</span>
+  <div class="footer-right">
+    <a href="#" id="footer-github">GitHub</a>
+    <a href="docs/index.html">Docs</a>
+    <a href="#cite">Cite</a>
+  </div>
+</footer>
+
+<script>
+  function copyCmd(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  function toggleBibtex() {
+    const el  = document.getElementById('bibtex');
+    const btn = document.querySelector('.toggle-bibtex');
+    const open = el.classList.toggle('open');
+    btn.textContent = open ? '[ hide BibTeX ]' : '[ show BibTeX ]';
+  }
+
+  const observer = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+    { threshold: 0.1 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

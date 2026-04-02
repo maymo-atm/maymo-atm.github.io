@@ -1,0 +1,66 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; don't cancel in-progress runs
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+
+  # ── Build ────────────────────────────────────────────────────────────────────
+  # Currently a pure static site — build just packages the repo for upload.
+  # When Sphinx docs are ready, uncomment the Python block below to generate
+  # docs/ before the upload step.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Optional: build Sphinx docs ──────────────────────────────────────────
+      # Uncomment once sphinx-src/conf.py and source files are in place.
+      #
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.11'
+      #
+      # - name: Install doc dependencies
+      #   run: pip install sphinx pydata-sphinx-theme nbsphinx
+      #
+      # - name: Build Sphinx docs
+      #   run: |
+      #     cd sphinx-src
+      #     make html
+      #     cp -r _build/html ../docs
+      # ─────────────────────────────────────────────────────────────────────────
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+  # ── Deploy ───────────────────────────────────────────────────────────────────
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
