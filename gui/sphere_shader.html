@@ -184,6 +184,9 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <h3 style="margin: 0; color: #88ccff; font-size: 14px;">Light Curve</h3>
         <div style="display: flex; align-items: center; gap: 6px;">
+            <button onclick="resetLightCurve()" style="background: #1a1a2e; color: #aaa; border: 1px solid #334;
+                border-radius: 3px; padding: 2px 7px; font-size: 11px;
+                cursor: pointer;">Reset</button>
             <label style="font-size: 11px; color: #aaa;">Update every</label>
             <input type="number" id="lcUpdateRate" value="5" min="1" max="60" style="
                 width: 35px; background: #1a1a2e; color: white;
@@ -832,8 +835,7 @@ const fragmentShader = `
         float mu      = max(dot(normalize(vNormal), normalize(vViewDir)), 0.0);
         bn            *= 1.0 - 0.3 * (1.0 - mu);
         vec3  color   = texture2D(colormapTex, vec2(bn, 0.5)).rgb;
-        float diffuse = max(dot(normalize(vNormal), normalize(vec3(5.0, 3.0, 5.0))), 0.0);
-        color         *= 0.2 + diffuse;
+        
 
         gl_FragColor = vec4(color, 1.0);
     }
@@ -1092,6 +1094,11 @@ function computeBrightness() {
     }
 
     return totalCount > 0 ? totalLum / totalCount : 0;
+}
+
+function resetLightCurve() {
+    lcHistory.fill(null);
+    drawLightCurve();
 }
 
 function updateLightCurve() {
