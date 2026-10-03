@@ -3,7 +3,7 @@
 Brown dwarf polar vortex modeling — multi-epoch atmospheric simulations for substellar objects.
 ---
 
-## Repository structure
+### Repository structure
 
 ```
 maymo/
